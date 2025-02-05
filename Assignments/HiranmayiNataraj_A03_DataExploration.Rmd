@@ -38,16 +38,13 @@ install.packages("lubridate")
 install.packages("tidyverse")
 ```
 ```{r}
-setwd('~/EDA_Spring2025/Data')
-setwd(here())
-
-
+library(here)
 litter <- read.csv(
 file = here('Data','Raw','NEON_NIWO_Litter_massdata_2018-08_raw.csv'),
 stringsAsFactors = T
 )
 
-neonics <- read.csv(
+neonids <- read.csv(
 file = here('Data','Raw','ECOTOX_Neonicotinoids_Insects_raw.csv'),
 stringsAsFactors = T
 )
@@ -76,15 +73,15 @@ stringsAsFactors = T
 5.  What are the dimensions of the dataset?
 
 ```{r}
-summary(neonics)
+summary(neonids)
 
 ```
 
 6.  Using the `summary` function on the "Effect" column, determine the most common effects that are studied. Why might these effects specifically be of interest? [Tip: The `sort()` command is useful for listing the values in order of magnitude...]
 
 ```{r}
-summary(neonics$Effect)
-sorted_effects <- sort(table(neonics$Effect), decreasing = TRUE)
+summary(neonids$Effect)
+sorted_effects <- sort(table(neonids$Effect), decreasing = TRUE)
 sorted_effects
 ```
 
@@ -94,7 +91,7 @@ sorted_effects
 7.  Using the `summary` function, determine the six most commonly studied species in the dataset (common name). What do these species have in common, and why might they be of interest over other insects? Feel free to do a brief internet search for more information if needed.[TIP: Explore the help on the `summary()` function, in particular the `maxsum` argument...]
 
 ```{r}
-summary(neonids$Species.Common.Name, maxsum = 500)
+summary(neonids$Species.Common.Name)
 sorted_species <- sort(table(neonids$Species.Common.Name), decreasing = TRUE)
 head(sorted_species, 6)
 ```
