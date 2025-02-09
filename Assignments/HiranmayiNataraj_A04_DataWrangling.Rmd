@@ -1,0 +1,271 @@
+---
+title: "Assignment 4: Data Wrangling (Fall 2024)"
+author: "Hiranmayi Nataraj"
+output: pdf_document
+geometry: margin=2.54cm
+---
+
+## OVERVIEW
+
+This exercise accompanies the lessons in Environmental Data Analytics on Data Wrangling 
+
+## Directions
+
+1. Rename this file `<FirstLast>_A04_DataWrangling.Rmd` (replacing `<FirstLast>` with your first and last name).
+2. Change "Student Name" on line 3 (above) with your name.
+3. Work through the steps, **creating code and output** that fulfill each instruction.
+4. Be sure to **answer the questions** in this assignment document.
+5. When you have completed the assignment, **Knit** the text and code into a single PDF file.
+6. Ensure that code in code chunks does not extend off the page in the PDF.
+
+
+## Set up your session 
+
+1a. Load the `tidyverse`,  `lubridate`, and `here` packages into your session.
+
+1b. Check your working directory.
+
+1c. Read in all four raw data files associated with the EPA Air dataset, being sure to set string columns to be read in a factors. See the README file for the EPA air datasets for more information (especially if you have not worked with air quality data previously). 
+
+2. Add the appropriate code to reveal the dimensions of the four datasets. 
+
+```{r setup, message = FALSE}
+#1a 
+
+library(tidyverse)
+library(lubridate)
+library(here)
+
+#1b 
+
+getwd()
+
+#1c 
+
+air1 <- read.csv(
+file = here('Data','Raw','EPAair_PM25_NC2018_raw.csv'),
+stringsAsFactors = F
+)
+
+air2 <- read.csv(
+file = here('Data','Raw','EPAair_PM25_NC2019_raw.csv'),
+stringsAsFactors = F
+)
+
+air3 <- read.csv(
+file = here('Data','Raw','EPAair_O3_NC2019_raw.csv'),
+stringsAsFactors = F
+)
+
+air4 <- read.csv(
+file = here('Data','Raw','EPAair_O3_NC2018_raw.csv'),
+stringsAsFactors = F
+)
+
+#2 
+dim(air1)
+dim(air2)
+dim(air3)
+dim(air4)
+
+```
+
+>All four datasets should have the same number of columns but unique record counts (rows). Do your datasets follow this pattern?
+Yes, it does 
+
+## Wrangle individual datasets to create processed files.
+
+3. Change the Date columns to be date objects.
+
+4. Select the following columns: Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE
+
+5. For the PM2.5 datasets, fill all cells in AQS_PARAMETER_DESC with "PM2.5" (all cells in this column should be identical).
+
+6. Save all four processed datasets in the Processed folder. Use the same file names as the raw files but replace "raw" with "processed".
+
+```{r questions 3 thru 4}
+#3
+air1$Date <- mdy(air1$Date)  
+air2$Date <- mdy(air2$Date)  
+air3$Date <- mdy(air3$Date)  
+air4$Date <- mdy(air4$Date)
+
+#4
+air1_selected <- air1[c("Date", "DAILY_AQI_VALUE", "Site.Name", "AQS_PARAMETER_DESC", "COUNTY", "SITE_LATITUDE", "SITE_LONGITUDE")]
+air2_selected <- air2[c("Date", "DAILY_AQI_VALUE", "Site.Name", "AQS_PARAMETER_DESC", "COUNTY", "SITE_LATITUDE", "SITE_LONGITUDE")]
+air3_selected <- air3[c("Date", "DAILY_AQI_VALUE", "Site.Name", "AQS_PARAMETER_DESC", "COUNTY", "SITE_LATITUDE", "SITE_LONGITUDE")]
+air4_selected <- air4[c("Date", "DAILY_AQI_VALUE", "Site.Name", "AQS_PARAMETER_DESC", "COUNTY", "SITE_LATITUDE", "SITE_LONGITUDE")]
+
+head(air1_selected)
+```
+
+
+```{r}
+#5
+air1$AQS_PARAMETER_DESC <- "PM2.5"
+unique(air1$AQS_PARAMETER_DESC)
+air2$AQS_PARAMETER_DESC <- "PM2.5"
+unique(air1$AQS_PARAMETER_DESC)
+#6
+processed_file_paths <- c(
+  here('Data', 'Processed', 'EPAair_PM25_NC2018_processed.csv'),
+  here('Data', 'Processed', 'EPAair_PM25_NC2019_processed.csv'),
+  here('Data', 'Processed', 'EPAair_O3_NC2019_processed.csv'),
+  here('Data', 'Processed', 'EPAair_O3_NC2018_processed.csv')
+)
+
+write.csv(air1, processed_file_paths[1], row.names = FALSE)
+write.csv(air2, processed_file_paths[2], row.names = FALSE)
+write.csv(air3, processed_file_paths[3], row.names = FALSE)
+write.csv(air4, processed_file_paths[4], row.names = FALSE)
+
+
+
+```
+
+
+## Combine datasets
+
+7. Combine the four datasets with `rbind`. Make sure your column names are identical prior to running this code.
+```{r}
+colnames(air1)
+colnames(air2)
+colnames(air3)
+colnames(air4)
+
+colnames(air1) <- gsub("Daily.Mean.PM2.5.Concentration", "Daily Value", colnames(air1))
+colnames(air2) <- gsub("Daily.Mean.PM2.5.Concentration", "Daily Value", colnames(air2))
+colnames(air3) <- gsub("Daily.Max.8.hour.Ozone.Concentration", "Daily Value", colnames(air3))
+colnames(air4) <- gsub("Daily.Max.8.hour.Ozone.Concentration", "Daily Value", colnames(air4))
+
+air1$Parameter_Type <- "Daily.Mean.PM2.5.Concentration"
+air2$Parameter_Type <- "Daily.Mean.PM2.5.Concentration"
+air3$Parameter_Type <- "Daily.Max.8.hour.Ozone.Concentration"
+air4$Parameter_Type <- "Daily.Max.8.hour.Ozone.Concentration"
+
+air1 <- air1[, c(1:which(names(air1) == "Daily Value"), 
+                 ncol(air1), 
+                 (which(names(air1) == "Daily Value")+1):(ncol(air1)-1))]
+
+air2 <- air2[, c(1:which(names(air2) == "Daily Value"),
+                 ncol(air2),
+                 (which(names(air2) == "Daily Value")+1):(ncol(air2)-1))]
+
+air3 <- air3[, c(1:which(names(air3) == "Daily Value"), 
+                 ncol(air3), 
+                 (which(names(air3) == "Daily Value")+1):(ncol(air3)-1))]
+
+air4 <- air4[, c(1:which(names(air4) == "Daily Value"), 
+                 ncol(air4), 
+                 (which(names(air4) == "Daily Value")+1):(ncol(air4)-1))]
+
+combined_data <- rbind(air1, air2, air3, air4)
+dim(combined_data)
+head(combined_data)
+
+```
+
+8. Wrangle your new dataset with a pipe function (%>%) so that it fills the following conditions: 
+
+  * Include only sites that the four data frames have in common:  
+    
+  "Linville Falls", "Durham Armory", "Leggett", "Hattie Avenue",  
+  "Clemmons Middle", "Mendenhall School", "Frying Pan Mountain", 
+  "West Johnston Co.", "Garinger High School", "Castle Hayne", 
+  "Pitt Agri. Center", "Bryson City", "Millbrook School" 
+  
+  (the function `intersect` can figure out common factor levels - but it will include sites with missing site information, which you don't want...) 
+
+  * Some sites have multiple measurements per day. Use the split-apply-combine strategy to generate daily means: group by date, site name, AQS parameter, and county. Take the mean of the AQI value, latitude, and longitude.
+  
+  * Add columns for "Month" and "Year" by parsing your "Date" column (hint: `lubridate` package)
+  
+  * Hint: the dimensions of this dataset should be 14,752 x 9.
+```{r}
+library(dplyr)
+library(lubridate)
+
+common_sites <- c("Linville Falls", "Durham Armory", "Leggett", "Hattie Avenue", 
+                  "Clemmons Middle", "Mendenhall School", "Frying Pan Mountain", 
+                  "West Johnston Co.", "Garinger High School", "Castle Hayne", 
+                  "Pitt Agri. Center", "Bryson City", "Millbrook School")
+
+
+processed_data <- combined_data %>%
+  
+  filter(Site.Name %in% common_sites) %>%
+  
+  group_by(Date, Site.Name, AQS_PARAMETER_DESC, COUNTY) %>%
+  
+  summarize(
+    Daily_Mean_AQI = mean(DAILY_AQI_VALUE, na.rm = TRUE),
+    Daily_Mean_Latitude = mean(SITE_LATITUDE, na.rm = TRUE),
+    Daily_Mean_Longitude = mean(SITE_LONGITUDE, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  
+  mutate(
+    Month = month(Date),
+    Year = year(Date)
+  )
+
+
+dim(processed_data)
+```
+
+9. Spread your datasets such that AQI values for ozone and PM2.5 are in separate columns. Each location on a specific date should now occupy only one row.
+```{r}
+library(tidyr)
+library(dplyr)
+
+spread_data <- processed_data %>%
+  spread(key = AQS_PARAMETER_DESC, value = Daily_Mean_AQI) %>%
+  select(Date, Site.Name, COUNTY, Ozone, `PM2.5`, everything())
+
+head(spread_data)
+```
+
+10. Call up the dimensions of your new tidy dataset.
+```{r}
+dim(spread_data)
+```
+
+11. Save your processed dataset with the following file name: "EPAair_O3_PM25_NC1819_Processed.csv"
+```{r}
+write.csv(spread_data, file = here('Data', 'Processed', 'EPAair_O3_PM25_NC1819_Processed.csv'), row.names = FALSE)
+```
+
+## Generate summary tables
+
+12. Use the split-apply-combine strategy to generate a summary data frame. Data should be grouped by site, month, and year. Generate the mean AQI values for ozone and PM2.5 for each group. Then, add a pipe to remove instances where mean **ozone** values are not available (use the function `drop_na` in your pipe). It's ok to have missing mean PM2.5 values in this result. 
+
+13. Call up the dimensions of the summary dataset.
+
+```{r questions 12 and 13}
+
+#12
+library(dplyr)
+library(tidyr)
+library(lubridate)
+
+summary_data <- spread_data %>%
+  group_by(Site.Name, Month, Year) %>%
+  summarize(
+    Mean_Ozone_AQI = mean(Ozone, na.rm = TRUE),
+    Mean_PM25_AQI = mean(`PM2.5`, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  drop_na(Mean_Ozone_AQI)
+
+head(summary_data)
+
+#13
+
+dim(summary_data)
+
+```
+
+14. Why did we use the function `drop_na` rather than `na.omit`? Hint: replace `drop_na` with `na.omit` in part 12 and observe what happens with the dimensions of the summary date frame.
+
+> Answer: drop_na only removes rows with missing values in the specified columns, whereas na.omit will remove any row where there is any missing value.
+
